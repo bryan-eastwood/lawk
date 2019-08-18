@@ -87,8 +87,11 @@
                          (decr "--")
                          (append ">>")))))
             (if op
-                (list (car op))
-                (list c))))
+                (progn (read-char stream)
+                       (list (car op)))
+                (if (char= c #\&)
+                    (error "Unexpected character: &")
+                    (list c)))))
 
         ((find c "{}()[],;+-*%^!><|?:~$=") (read-char stream) (list c))))
 
