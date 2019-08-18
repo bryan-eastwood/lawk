@@ -89,7 +89,7 @@
                 (list (car op))
                 (list c))))
 
-        ((find c "{}()[],;+-*%^!><|?:˜$=") (read-char stream) (list c))))
+        ((find c "{}()[],;+-*%^!><|?:~$=") (read-char stream) (list c))))
 
 (defun take-token (stream &aux (c (peek-char nil stream)))
   (cond ((char= c #\#) (read-until #\newline stream)
