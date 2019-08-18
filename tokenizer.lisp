@@ -108,7 +108,9 @@
                               (list 'string (read-string-literal stream))
                               (read-char stream)))
 
-        ((char= c #\/) (list 'ere (read-ere stream)))
+        ((char= c #\/) (prog2 (read-char stream)
+                              (list 'ere (read-ere stream))
+                              (read-char stream)))
 
         ((or (char= c #\space)
              (char= c #\tab)) (read-char stream)
@@ -122,7 +124,6 @@
         (t (or (read-other-token stream) (error "Unrecognized character: ~a" c)))))
 
 (defmethod tokenize ((string string))
-  (princ string)
   (with-input-from-string (stream string)
     (tokenize stream)))
 
