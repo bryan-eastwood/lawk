@@ -9,7 +9,8 @@
   (read-until (lambda (x) (char= x c)) stream))
 
 (defmethod read-until ((f function) stream)
-  (loop with buf = (make-array 32 :fill-pointer 0)
+  (loop with buf = (make-array 32 :fill-pointer 0
+                                  :adjustable t)
         for c = (if (listen stream)
                     (peek-char nil stream)
                     (return-from read-until (coerce buf 'string))) do
@@ -20,7 +21,7 @@
 (defun read-string-literal (stream)
   ;; TODO: Implement string parsing according
   ;; to IEEE Std 1003.1-2001 Ch. 5
-  (read-until #\' stream))
+  (read-until #\" stream))
 
 (defun read-ere (stream)
   ;; TODO: Implement string parsing according
@@ -103,7 +104,9 @@
                            (progn (read-char stream) (take-token stream))
                            (error "Unexpected \\")))
 
-        ((char= c #\") (list 'string (read-string-literal stream)))
+        ((char= c #\") (prog2 (read-char stream)
+                              (list 'string (read-string-literal stream))
+                              (read-char stream)))
 
         ((char= c #\/) (list 'ere (read-ere stream)))
 
@@ -119,6 +122,7 @@
         (t (or (read-other-token stream) (error "Unrecognized character: ~a" c)))))
 
 (defmethod tokenize ((string string))
+  (princ string)
   (with-input-from-string (stream string)
     (tokenize stream)))
 
