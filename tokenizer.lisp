@@ -48,8 +48,8 @@
 
 (defun find-name (word)
   (if (find word '("BEGIN" "break" "continue" "delete" "do" "else" "END" "exit"
-                  "for" "function" "getline" "if" "in" "next" "print" "printf"
-                  "return" "while") :test #'string=)
+                   "for" "function" "getline" "if" "in" "next" "print" "printf"
+                   "return" "while") :test #'string=)
       (list (intern (string-upcase word)))
       (list 'name word)))
 
@@ -97,9 +97,14 @@
 
         ((char= c #\newline) (read-char stream)
                              (list 'newline))
-        ;; TODO: Implement `Lexical Conventions' #4,
-        ;; backslash followed by newline
+
+        ((char= c #\\) (read-char stream)
+                       (if (char= (peek-char nil stream) #\newline)
+                           (progn (read-char stream) (take-token stream))
+                           (error "Unexpected \\")))
+
         ((char= c #\") (list 'string (read-string-literal stream)))
+
         ((char= c #\/) (list 'ere (read-ere stream)))
 
         ((or (char= c #\space)
@@ -120,8 +125,3 @@
 (defmethod tokenize ((stream stream))
   (loop while (peek-char t stream nil nil)
         collect (take-token stream)))
-
-(defun test ()
-  (print (tokenize "1.2+1.3")))
-
-(test)
