@@ -66,7 +66,7 @@
 (defun read-other-token (stream &aux (c (peek-char nil stream)))
   (cond ((find c "+-*/%^|&!=<>")
           (read-char stream)
-          (let* ((d (peek-char nil stream))
+          (let* ((d (peek-char nil stream nil #\Null))
                  (op (find-if (lambda (x)
                            (string= (cadr x)
                              (concatenate 'string (list c d))))
@@ -92,7 +92,21 @@
 
         ((find c "{}()[],;+-*%^!><|?:~$=") (read-char stream) (list c))))
 
-(defun take-token (stream &aux (c (peek-char nil stream)))
+(defun handle-/ (stream prev-token)
+  ;; If prev-token is one of expr or print_expr,
+  ;; we read a #\/ token, otherwise we read an ERE
+  ;; rightmost_terminal(expr): NAME, GETLINE, ']', ')',
+  ;; NUMBER, STRING, ERE, INCR, DECR, BUILTIN_FUNC_NAME
+  ;; rightmost_terminal(print_expr): NAME, ')', NUMBER,
+  ;; STRING, ']', ERE, INCR, DECR, BUILTIN_FUNC_NAME
+  (if (member (car prev-token) '(name getline #\] #\) number string
+                                 ere incr decr builtin-func-name))
+      (read-other-token stream)
+      (prog2 (read-char stream)
+             (list 'ere (read-ere stream))
+             (read-char stream))))
+
+(defun take-token (stream &optional prev-token &aux (c (peek-char nil stream)))
   (cond ((char= c #\#) (read-until #\newline stream)
                        (take-token stream))
 
@@ -108,9 +122,7 @@
                               (list 'string (read-string-literal stream))
                               (read-char stream)))
 
-        ((char= c #\/) (prog2 (read-char stream)
-                              (list 'ere (read-ere stream))
-                              (read-char stream)))
+        ((char= c #\/) (handle-/ stream prev-token))
 
         ((or (char= c #\space)
              (char= c #\tab)) (read-char stream)
@@ -128,5 +140,6 @@
     (tokenize stream)))
 
 (defmethod tokenize ((stream stream))
-  (loop while (peek-char t stream nil nil)
-        collect (take-token stream)))
+  (loop with prev-token
+        while (peek-char t stream nil nil)
+        collect (setf prev-token (take-token stream prev-token))))
