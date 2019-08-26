@@ -10,4 +10,4 @@
         (loop for form in cases collect
           (if (eql (car form) 'otherwise)
               (cons t (cdr form))
-              `((,test ,valname ',(car form)) ,@(cdr form))))))))
+              `((funcall ,test ,valname ',(car form)) ,@(cdr form))))))))
