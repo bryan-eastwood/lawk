@@ -1,8 +1,11 @@
 ;; START program
 
+;; program          : item-list
+;;                  | actionless-item-list
+;;                  ;
+
 (program           (item-list)
                    (actionless-item-list))
-
 
 (item-list         (newline-opt)
                    (actionless-item-list item terminator)
